@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>mglynn - Program 4</title>
+
+    <script id="shader-vs-face" type="x-shader/x-fragment">
+    attribute vec4 a_Position;
+    attribute vec3 a_Normal;
+    attribute vec2 a_textureCoord;
+    uniform mat4 u_mvp_M;
+    uniform mat4 u_mvp_V;
+    uniform mat4 u_mvp_P;
+    uniform mat4 u_rotationMatrix;
+    varying vec3 v_Normal;
+    varying mat4 v_mvp;
+    varying vec3 vPosition;
+    varying vec2 v_texCoord;
+    void main() {
+      v_mvp = u_mvp_P * u_mvp_V * u_mvp_M;//u_mvp_M * u_mvp_V * u_mvp_P;
+      vPosition = a_Position.xyz;
+      gl_Position =  v_mvp * a_Position;
+      v_Normal = normalize((u_rotationMatrix  * vec4(a_Normal, 1)).xyz);
+      v_texCoord = a_textureCoord;
+    }
+    </script>
+
+    <script id="shader-fs-face" type="x-shader/x-fragment">
+    precision mediump float;
+    varying vec3 v_Normal;
+    uniform vec3 u_DiffuseColor;
+    uniform vec3 u_AmbientColor;
+    uniform vec3 u_SpecularColor;
+    uniform vec3 u_LightColor;
+    uniform vec3 u_LightDirection;
+    uniform vec3 u_PointLightLocation;
+    uniform vec3 u_PointLightColor;
+    uniform float u_GlossinessFactor;
+    uniform bool u_LightEnabled;
+    uniform bool u_PointLightEnabled;
+    uniform bool u_SpecularEnabled;
+    uniform bool u_ClickEvent;
+    uniform bool u_unlit;
+    uniform bool u_active;
+    uniform bool u_hasTexture;
+    uniform sampler2D u_texture;
+    varying mat4 v_mvp;
+    varying vec3 vPosition;
+    varying vec2 v_texCoord;
+    void main() {
+        if (u_ClickEvent) {
+            gl_FragColor = vec4 (u_DiffuseColor, 1);
+            return;
+        }
+        if (!u_active) {
+            gl_FragColor = vec4 (0.5, 0.5, 0.5, 1);
+            return;
+        }
+        if (u_unlit) {
+            gl_FragColor = vec4 (u_DiffuseColor, 1);
+            return;
+        }
+        vec3 specular_color = vec3 (0, 0, 0);
+        vec3 ambient_color = u_LightColor * u_AmbientColor;
+        vec3 diffuse_color = vec3 (0, 0, 0);
+        if (u_hasTexture) {
+            diffuse_color = texture2D(u_texture, v_texCoord).rgb;
+        }
+        vec3 normalized_lightDirection = normalize (u_LightDirection);
+        if (u_LightEnabled) {
+            diffuse_color += u_LightColor * u_DiffuseColor * clamp(dot(v_Normal, normalized_lightDirection), 0.0, 1.0);
+        }
+        if (u_PointLightEnabled) {
+            diffuse_color += u_PointLightColor * u_DiffuseColor
+            * clamp(dot(v_Normal, normalize(u_PointLightLocation - vPosition)), 0.0, 1.0);
+        }
+        if (u_SpecularEnabled) {
+            float lightMult = clamp(dot (v_Normal, normalized_lightDirection), 0.0, 1.0);
+
+            vec3 reflectionVector = reflect(normalized_lightDirection, v_Normal);
+            vec3 viewDir = -vec3(0, 0, 1);
+            float specIntensity = 0.0;
+            if (u_LightEnabled) {
+                specular_color += u_LightColor * u_SpecularColor * pow(clamp(dot(reflectionVector, viewDir), 0.0, 1.0), u_GlossinessFactor);
+            }
+            if (u_PointLightEnabled) {
+                specular_color += u_PointLightColor * u_SpecularColor * pow(clamp(dot(
+                reflect(normalize(u_PointLightLocation - vPosition), v_Normal), viewDir), 0.0, 1.0), u_GlossinessFactor);
+            }
+        }
+        gl_FragColor = vec4(ambient_color + diffuse_color + specular_color, 1);
+    }
+    </script>
+
+    <script id="shader-vs-line" type="x-shader/x-fragment">
+    attribute vec4 a_Position;
+    uniform mat4 u_mvp_M;
+    uniform mat4 u_mvp_V;
+    uniform mat4 u_mvp_P;
+    void main() {
+      gl_Position = u_mvp_P * u_mvp_V * u_mvp_M * a_Position;
+    }
+    </script>
+
+    <script id="shader-fs-line" type="x-shader/x-fragment">
+    precision mediump float;
+    varying vec4 v_Color;
+    uniform vec3 u_DiffuseColor;
+    uniform bool u_ClickEvent;
+    uniform bool u_active;
+    void main() {
+      if (u_ClickEvent) {
+        gl_FragColor = vec4(u_DiffuseColor, 1);
+        return;
+      }
+      else {
+        gl_FragColor = vec4(u_DiffuseColor, 1);
+      }
+      if (!u_active) {
+          gl_FragColor = vec4 (0.5, 0.5, 0.5, 1);
+          return;
+      }
+    }
+    </script>
+</head>
+
+<body onload="main()">
+<canvas id="webgl" width="1001" height="1001" style="border:1px solid #000000;">
+    Please use a browser that supports "canvas"
+</canvas>
+<p>
+    <input id="createsor" type="button" value="Create New SOR">
+</p>
+<p>
+    <input id="fileinput" type="file" title="Load SOR">
+</p>
+<p>
+    <input id="savesor" type="button" value="Save Selected SOR">
+</p>
+<p>
+    Show Normals (No longer works properly): <input type="checkbox" id="shownormals">
+</p>
+<p>
+    Texture Enabled: <input type="checkbox" id="textureenabled">
+</p>
+<p>
+    Update: <input type="checkbox" id="shouldupdate">
+</p>
+<p>
+    Specular: <input type="checkbox" id="specularswitch">
+</p>
+<p>
+    Glossiness: <input type="range" id="glossiness" min="1" max="20"> <span id="glossinessvalue">1</span>
+</p>
+<button id="shadingtypebutton" type="button">Switch to <span id="shadingbuttontype">smooth</span> shading</button>
+<button id="projectiontypebutton" type="button">Switch to <span id="projectionbuttontype">Perspective</span> projection
+</button>
+
+<script src="../lib/webgl-utils.js"></script>
+<script src="../lib/webgl-debug.js"></script>
+<script src="../lib/cuon-utils.js"></script>
+<script src="../lib/cuon-matrix.js"></script>
+<script src="../lib/ioSOR.js"></script>
+<script src="mglynn_main.js"></script>
+<script src="mglynn_utilities_datastructure.js"></script>
+<script src="mglynn_utilities_math.js"></script>
+<script src="mglynn_sor_utilities.js"></script>
+<script src="mglynn_utilities_shading.js"></script>
+<script src="mglynn_interaction.js"></script>
+<script src="mglynn_ui.js"></script>
+<script src="mglynn_primitives.js"></script>
+<script src="mglynn_animation.js"></script>
+</body>
+</html>
+

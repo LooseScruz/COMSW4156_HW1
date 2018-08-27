@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>mglynn - lab1</title>
+</head>
+
+<body onload="main()">
+<canvas id="webgl" width="500" height="500" style="border:1px solid #000000;">
+    Please use a browser that supports "canvas"
+</canvas>
+<p>
+    <input id="fileinput" type="file" title="Load SOR">
+</p>
+<p>
+    <input id="savesor" type="button" value="Save SOR">
+</p>
+<p>
+    Show Normals: <input type="checkbox" id="shownormals">
+</p>
+<p>
+    Update: <input type="checkbox" id="shouldupdate">
+</p>
+
+<script src="../lib/webgl-utils.js"></script>
+<script src="../lib/webgl-debug.js"></script>
+<script src="../lib/cuon-utils.js"></script>
+<script src="../lib/cuon-matrix.js"></script>
+<script src="../lib/ioSOR.js"></script>
+<script src="mglynn_prog1.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>mglynn - lab2</title>
+
+    <script id="shader-vs" type="x-shader/x-fragment">
+    attribute vec4 a_Position;
+    uniform mat4 mvp;
+    attribute vec3 a_Color;
+    varying vec4 v_Color;
+    void main() {
+      gl_Position =  mvp * a_Position;
+      gl_PointSize = 10.0;
+      v_Color = vec4(a_Color, 1);
+    }
+    </script>
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    varying vec4 v_Color;
+    uniform vec4 u_color;
+    void main() {
+      gl_FragColor = u_color;
+    }
+    </script>
+</head>
+
+<body onload="main()">
+<canvas id="webgl" width="500" height="500" style="border:1px solid #000000;">
+    Please use a browser that supports "canvas"
+</canvas>
+<p>
+    <input id="fileinput" type="file" title="Load SOR">
+</p>
+<p>
+    <input id="savesor" type="button" value="Save SOR">
+</p>
+<p>
+    Show Normals: <input type="checkbox" id="shownormals">
+</p>
+<p>
+    Update: <input type="checkbox" id="shouldupdate">
+</p>
+
+<script src="../lib/webgl-utils.js"></script>
+<script src="../lib/webgl-debug.js"></script>
+<script src="../lib/cuon-utils.js"></script>
+<script src="../lib/cuon-matrix.js"></script>
+<script src="../lib/ioSOR.js"></script>
+<script src="mglynn_lab2.js"></script>
+</body>
+</html>
+
